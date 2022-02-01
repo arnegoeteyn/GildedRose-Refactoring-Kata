@@ -1,4 +1,6 @@
-module GildedRose exposing (Item, ItemType(..), update_quality, update_quality_old, typeFromName)
+module GildedRose exposing (Item, ItemType(..), typeFromName, update_quality, update_quality_old)
+
+import Dict exposing (update)
 import Html.Attributes exposing (type_)
 
 
@@ -14,62 +16,98 @@ type ItemType
     | Brie
     | Ticket
     | Regular
+    | Conjured
 
-typeFromName: String -> ItemType
+
+typeFromName : String -> ItemType
 typeFromName name =
     case name of
-        "Sulfuras, Hand of Ragnaros" -> Legendary
-        "Backstage passes to a TAFKAL80ETC concert" -> Ticket
-        "Aged Brie" -> Brie
-        _ -> Regular
+        "Sulfuras, Hand of Ragnaros" ->
+            Legendary
 
-updateSellBy: (Item, Bool) -> Item
-updateSellBy (item, shouldLower) = 
-    {item | sell_by = if shouldLower then item.sell_by - 1 else item.sell_by}
+        "Backstage passes to a TAFKAL80ETC concert" ->
+            Ticket
 
-updateItem : Item -> (Item, Bool)
+        "Aged Brie" ->
+            Brie
+
+        _ ->
+            Regular
+
+
+updateSellBy : ( Item, Bool ) -> Item
+updateSellBy ( item, shouldLower ) =
+    { item
+        | sell_by =
+            if shouldLower then
+                item.sell_by - 1
+
+            else
+                item.sell_by
+    }
+
+
+regularUpdate : Item -> Item
+regularUpdate item =
+    if item.sell_by < 0 && item.quality >= 2 then
+        { item | quality = item.quality - 2 }
+
+    else if item.quality >= 1 then
+        { item | quality = item.quality - 1 }
+
+    else
+        { item | quality = 0 }
+
+
+brieUpdate : Item -> Item
+brieUpdate item =
+    { item | quality = item.quality + 1 }
+
+
+ticketUpdate : Item -> Item
+ticketUpdate item =
+    if item.sell_by < 0 then
+        { item | quality = 0 }
+
+    else if item.sell_by < 6 then
+        { item | quality = item.quality + 3 }
+
+    else if item.sell_by < 11 then
+        { item | quality = item.quality + 2 }
+
+    else
+        { item | quality = item.quality + 1 }
+
+
+updateItem : Item -> ( Item, Bool )
 updateItem item =
     let
-        type_ = typeFromName item.name
+        type_ =
+            typeFromName item.name
     in
     case type_ of
         Legendary ->
-            (item, False)
+            ( item, False )
 
         Brie ->
             if item.quality < 50 then
-                ({ item | quality = item.quality + 1 }, True)
+                ( brieUpdate item, True )
 
             else
-                (item, False)
+                ( item, False )
 
         Ticket ->
             if item.quality < 50 then
-                (if item.sell_by < 0 then
-                    { item | quality = 0 }
-
-                else if item.sell_by < 6 then
-                    { item | quality = item.quality + 3 }
-
-                else if item.sell_by < 11 then
-                    { item | quality = item.quality + 2 }
-
-                else
-                    { item | quality = item.quality + 1 } 
-                , True)
+                ( ticketUpdate item, True )
 
             else
-                (item, False)
+                ( item, False )
 
         Regular ->
-            if item.sell_by < 0 && item.quality >= 2 then
-                ({ item | quality = item.quality - 2 }, True)
+            ( regularUpdate item, True )
 
-            else if item.quality >= 1 then
-                ({ item | quality = item.quality - 1 }, True)
-
-            else
-                ({ item | quality = 0 }, True)
+        Conjured ->
+            ( (regularUpdate << regularUpdate) item, True )
 
 
 update_quality : List Item -> List Item
