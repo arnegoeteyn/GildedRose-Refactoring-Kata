@@ -10,14 +10,6 @@ tupleFuzzer : Fuzzer Int -> Fuzzer Int -> Fuzzer (Int, Int)
 tupleFuzzer sell_by_fuzzer quality_fuzzer =
         Fuzz.tuple (sell_by_fuzzer, quality_fuzzer)    
 
-typeFromName: String -> ItemType
-typeFromName name =
-    case name of
-        "Sulfuras, Hand of Ragnaros" -> Legendary
-        "Backstage passes to a TAFKAL80ETC concert" -> Ticket
-        "Aged Brie" -> Brie
-        _ -> Regular
-
 
 generateRandomItems : List (Int, Int) ->  List GildedRose.Item
 generateRandomItems valuesList =
@@ -36,12 +28,11 @@ generateRandomItems valuesList =
         (\(sellBy, quality) ->
             let
                  name = nameIndex (sellBy + quality)
-                 type_ = typeFromName name
             in
-            case type_ of
+            case typeFromName name of
                 Legendary ->    legendaryItem sellBy
                 _ ->
-                    {sell_by = sellBy, quality = quality, name = nameIndex (sellBy + quality), type_ = typeFromName <| nameIndex (sellBy + quality)}) 
+                    {sell_by = sellBy, quality = quality, name = name }) 
         valuesList
 
 
@@ -52,7 +43,7 @@ applyNTimes n f value =
         _ -> applyNTimes (n - 1) f (f value)
 
 legendaryItem: Int -> Item
-legendaryItem sellBy = Item "Sulfuras, Hand of Ragnaros" sellBy 80 Legendary
+legendaryItem sellBy = Item "Sulfuras, Hand of Ragnaros" sellBy 80 
 
 suite : Test
 suite =
@@ -60,7 +51,7 @@ suite =
         (\_ ->
             let
                 foo =
-                    Item "foo" 10 30 Regular
+                    Item "foo" 10 30
             in
             Expect.equal foo.name "foo"
         )
@@ -81,7 +72,7 @@ testRandomList =
     fuzz (list <| tupleFuzzer int (Fuzz.intRange 0 50)) "A random list should return the same result on the old function and the new function" <|
         \t -> 
             let
-                randomItems = generateRandomItems t  |> Debug.log "reao"
+                randomItems = generateRandomItems t 
             in
             Expect.equal (GildedRose.update_quality randomItems) (GildedRose.update_quality_old randomItems)
  

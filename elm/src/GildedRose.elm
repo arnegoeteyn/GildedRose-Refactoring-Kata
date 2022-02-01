@@ -1,11 +1,10 @@
-module GildedRose exposing (Item, ItemType(..), update_quality, update_quality_old)
+module GildedRose exposing (Item, ItemType(..), update_quality, update_quality_old, typeFromName)
 
 
 type alias Item =
     { name : String
     , sell_by : Int
     , quality : Int
-    , type_ : ItemType
     }
 
 
@@ -15,10 +14,20 @@ type ItemType
     | Ticket
     | Regular
 
+typeFromName: String -> ItemType
+typeFromName name =
+    case name of
+        "Sulfuras, Hand of Ragnaros" -> Legendary
+        "Backstage passes to a TAFKAL80ETC concert" -> Ticket
+        "Aged Brie" -> Brie
+        _ -> Regular
 
 updateItem : Item -> Item
 updateItem item =
-    case item.type_ of
+    let
+        type_ = typeFromName item.name
+    in
+    case type_ of
         Legendary ->
             item
 
