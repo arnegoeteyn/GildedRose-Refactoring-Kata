@@ -1,7 +1,4 @@
-module GildedRose exposing (Item, ItemType(..), typeFromName, update_quality, update_quality_old)
-
-import Dict exposing (update)
-import Html.Attributes exposing (type_)
+module GildedRose exposing (Item, ItemType(..), typeFromName, updateItem, update_quality, update_quality_old)
 
 
 type alias Item =
@@ -32,7 +29,11 @@ typeFromName name =
             Brie
 
         _ ->
-            Regular
+            if String.startsWith "Conjured" name then
+                Conjured
+
+            else
+                Regular
 
 
 updateSellBy : ( Item, Bool ) -> Item
@@ -79,8 +80,8 @@ ticketUpdate item =
         { item | quality = item.quality + 1 }
 
 
-updateItem : Item -> ( Item, Bool )
-updateItem item =
+qualityUpdate : Item -> ( Item, Bool )
+qualityUpdate item =
     let
         type_ =
             typeFromName item.name
@@ -110,9 +111,14 @@ updateItem item =
             ( (regularUpdate << regularUpdate) item, True )
 
 
+updateItem : Item -> Item
+updateItem =
+    qualityUpdate >> updateSellBy
+
+
 update_quality : List Item -> List Item
 update_quality =
-    List.map (updateItem >> updateSellBy)
+    List.map updateItem
 
 
 update_quality_old : List Item -> List Item
