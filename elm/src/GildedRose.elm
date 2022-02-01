@@ -1,4 +1,4 @@
-module GildedRose exposing (Item, ItemType(..), typeFromName, updateItem, update_quality, update_quality_old)
+module GildedRose exposing (Item, ItemType(..), typeFromName, updateItem, update_quality, update_quality_old, legendaryQuality, regularMaxQuality)
 
 
 type alias Item =
@@ -14,6 +14,12 @@ type ItemType
     | Ticket
     | Regular
     | Conjured
+
+legendaryQuality : number
+legendaryQuality = 80
+
+regularMaxQuality : number
+regularMaxQuality = 50
 
 
 typeFromName : String -> ItemType
@@ -38,14 +44,22 @@ typeFromName name =
 
 updateSellBy : ( Item, Bool ) -> Item
 updateSellBy ( item, shouldLower ) =
-    { item
-        | sell_by =
-            if shouldLower then
-                item.sell_by - 1
+    if shouldLower then
+        { item
+            | sell_by = item.sell_by - 1
 
-            else
-                item.sell_by
-    }
+            -- In the old code it was possible to get a ticket worth up to 52 quality.
+            -- This is not allowed according to the spec
+            -- This bug can be fixed by toggling the following line of code, but this is kept commented out
+            -- to make everything work exactly as it was before.
+                
+            
+
+            -- , quality = min regularMaxQuality  item.quality 
+        }
+
+    else
+        item
 
 
 regularUpdate : Item -> Item

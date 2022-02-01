@@ -1,10 +1,10 @@
-module GildedRoseTest exposing (suite, testConjuredItem, testEmptyList, testLegendaryItem, testRandomList)
+module GildedRoseTest exposing (suite, testConjuredItem, testEmptyList, testLegendaryItem, testRandomConjuredLists, testRandomList)
 
-import Array exposing (Array)
-import Expect exposing (Expectation)
-import Fuzz exposing (Fuzzer, int, list, string)
+import Fuzz exposing (Fuzzer, int, list)
 import GildedRose exposing (..)
 import Test exposing (..)
+import Array
+import Expect 
 
 
 tupleFuzzer : Fuzzer Int -> Fuzzer Int -> Fuzzer ( Int, Int )
@@ -31,15 +31,14 @@ newSupportedNames =
            ]
 
 
-generateRandomItems : List ( Int, Int ) -> List GildedRose.Item
-generateRandomItems valuesList =
+generateRandomItems : List ( Int, Int ) -> List String -> List GildedRose.Item
+generateRandomItems valuesList names =
     let
-        names =
-            oldSupportedNames
-                |> Array.fromList
+        arrayNames =
+            names |> Array.fromList
 
         nameIndex =
-            \i -> modBy (Array.length names) i |> (\index -> Array.get index names |> Maybe.withDefault "An item representing an error")
+            \i -> modBy (Array.length arrayNames) i |> (\index -> Array.get index arrayNames |> Maybe.withDefault "An item representing an error")
     in
     List.map
         (\( sellBy, quality ) ->
@@ -69,7 +68,29 @@ applyNTimes n f value =
 
 legendaryItem : Int -> Item
 legendaryItem sellBy =
-    Item "Sulfuras, Hand of Ragnaros" sellBy 80
+    Item "Sulfuras, Hand of Ragnaros" sellBy legendaryQuality
+
+
+isValidQuality : Item -> Bool
+isValidQuality item =
+    let
+        maxQuality =
+            if typeFromName item.name == Legendary then
+                legendaryQuality
+
+            else
+                regularMaxQuality
+    in
+    item.quality
+        >= 0
+        && item.quality
+        <= maxQuality + 2 -- The old function has a bug in it such that a ticket can be worth up to 52 quality
+        && (if typeFromName item.name == Legendary then
+                item.quality == maxQuality  
+
+            else
+                True
+           )
 
 
 suite : Test
@@ -99,7 +120,7 @@ testLegendaryItem =
 
 testConjuredItem : Test
 testConjuredItem =
-    fuzz2 (Fuzz.intRange 0 20) (Fuzz.intRange 0 50) "A conjured item should degrade twice as fast as an old one" <|
+    fuzz2 (Fuzz.intRange 0 20) (Fuzz.intRange 0 regularMaxQuality) "A conjured item should degrade twice as fast as an old one" <|
         \sellBy quality ->
             let
                 originalConjuredItem =
@@ -131,10 +152,30 @@ testConjuredItem =
 
 testRandomList : Test
 testRandomList =
-    fuzz (list <| tupleFuzzer int (Fuzz.intRange 0 50)) "A random list should return the same result on the old function and the new function" <|
+    fuzz (list <| tupleFuzzer (Fuzz.intRange 0 100) (Fuzz.intRange 0 regularMaxQuality)) "A random list should return the same result on the old function and the new function" <|
         \t ->
             let
                 randomItems =
-                    generateRandomItems t
+                    generateRandomItems t oldSupportedNames
             in
             Expect.equal (GildedRose.update_quality randomItems) (GildedRose.update_quality_old randomItems)
+
+
+testRandomConjuredLists : Test
+testRandomConjuredLists =
+    fuzz (list <| tupleFuzzer (Fuzz.intRange 0 100) (Fuzz.intRange 0 regularMaxQuality)) "No item should be wrongly updated" <|
+        \t ->
+            let
+                randomItems =
+                    generateRandomItems t newSupportedNames
+            in
+            Expect.all
+                [ List.all isValidQuality >> Expect.true "expect every item to have a valid quantity"
+                , \items ->
+                    items
+                        |> List.filter (\item -> typeFromName item.name == Ticket && item.sell_by < -1)
+                        |> List.all (\item -> item.quality == 0)
+                        |> Expect.true "Every ticket past its due date should have quality 0"
+                ]
+            <|
+                GildedRose.update_quality randomItems
