@@ -62,12 +62,8 @@ updateItem item =
                 (item, False)
 
         Regular ->
-            if item.sell_by < 0 && item.quality > 0 then
-                if item.quality >= 2 then
-                    ({ item | quality = item.quality - 2 }, True)
-
-                else
-                    ({ item | quality = 0 }, True)
+            if item.sell_by < 0 && item.quality >= 2 then
+                ({ item | quality = item.quality - 2 }, True)
 
             else if item.quality >= 1 then
                 ({ item | quality = item.quality - 1 }, True)
