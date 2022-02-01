@@ -24,39 +24,21 @@ updateItem item =
 
         Brie ->
             if item.quality < 50 then
-                if item.name == "Backstage passes to a TAFKAL80ETC concert" then
-                    if item.sell_by < 0 then
-                        { item | sell_by = item.sell_by - 1, quality = 0 }
-
-                    else if item.sell_by < 6 then
-                        { item | sell_by = item.sell_by - 1, quality = item.quality + 3 }
-
-                    else if item.sell_by < 11 then
-                        { item | sell_by = item.sell_by - 1, quality = item.quality + 2 }
-
-                    else
-                        { item | sell_by = item.sell_by - 1, quality = item.quality + 1 }
-
-                else
-                    { item | sell_by = item.sell_by - 1, quality = item.quality + 1 }
+                { item | sell_by = item.sell_by - 1, quality = item.quality + 1 }
 
             else
                 { item | sell_by = item.sell_by }
 
         Ticket ->
             if item.quality < 50 then
-                if item.name == "Backstage passes to a TAFKAL80ETC concert" then
-                    if item.sell_by < 0 then
-                        { item | sell_by = item.sell_by - 1, quality = 0 }
+                if item.sell_by < 0 then
+                    { item | sell_by = item.sell_by - 1, quality = 0 }
 
-                    else if item.sell_by < 6 then
-                        { item | sell_by = item.sell_by - 1, quality = item.quality + 3 }
+                else if item.sell_by < 6 then
+                    { item | sell_by = item.sell_by - 1, quality = item.quality + 3 }
 
-                    else if item.sell_by < 11 then
-                        { item | sell_by = item.sell_by - 1, quality = item.quality + 2 }
-
-                    else
-                        { item | sell_by = item.sell_by - 1, quality = item.quality + 1 }
+                else if item.sell_by < 11 then
+                    { item | sell_by = item.sell_by - 1, quality = item.quality + 2 }
 
                 else
                     { item | sell_by = item.sell_by - 1, quality = item.quality + 1 }
