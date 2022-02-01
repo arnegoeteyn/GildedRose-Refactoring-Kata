@@ -1,11 +1,14 @@
-module GildedRose exposing (Item, update_quality)
+module GildedRose exposing (Item, ItemType(..), update_quality)
 
 
 type alias Item =
     { name : String
     , sell_by : Int
     , quality : Int
+    , type_: ItemType
     }
+
+type ItemType = Legendary | Brie | Ticket | Regular
 
 
 update_quality : List Item -> List Item
